@@ -54,9 +54,6 @@ class preprocessor():
 		logging.info('Calculating synthetic features...')
 		# Keep only drugs, remove IV fluids
 		self.raw_profile_data = self.raw_profile_data.loc[self.raw_profile_data['DRUG_TYPE']=='MAIN'].copy()
-		# Generate unique drug id strings from the drug and prod_strength columns
-		self.raw_profile_data['DRUG_EXACT_NAME'] = self.raw_profile_data['DRUG'] + ' ' + self.raw_profile_data['PROD_STRENGTH']
-		self.raw_profile_data['DRUG_EXACT_NAME'] = self.raw_profile_data['DRUG_EXACT_NAME'].str.replace(' ', '_')
 		# Convert datetime string in services to actual datetimes and sort. 
 		# Here we normalize the transfer datetimes (set all time parts to 
 		# 00:00:00) because in MIMIC drug start and end times are all at 
@@ -80,8 +77,9 @@ class preprocessor():
 		self.raw_profile_data = self.raw_profile_data.sort_values(['datetime_beg', 'HADM_ID'])
 		# Add admit start times to prescriptions data
 		self.raw_profile_data = self.raw_profile_data.join(admit_data.set_index('HADM_ID'), on='HADM_ID')
-		# Drop rows with null DRUG_EXACT_NAME, datetime_beg, datetime_end
-		self.raw_profile_data.dropna(subset=['DRUG_EXACT_NAME', 'datetime_beg', 'datetime_end'], inplace=True)
+		# Drop empty formulary drug code (n=1928) datetime_beg (n=3181), datetime_end (n=5151)
+		self.raw_profile_data.dropna(subset=['FORMULARY_DRUG_CD', 'datetime_beg', 'datetime_end'], inplace=True)
+
 		# Add service at time of prescription to prescription data
 		self.raw_profile_data = pd.merge_asof(self.raw_profile_data, depa_data, left_on='datetime_beg', right_on='TRANSFER_DATETIME', by='HADM_ID')
 		# Rename HADM_ID to enc for compatibility with rest of preprocessor and convert to int
@@ -109,7 +107,7 @@ class preprocessor():
 		# Iterate over encounters, send each encounter to self.build_enc_profiles
 		for n, enc in zip(range(0, length), self.raw_profile_data.groupby(level='enc', sort=False)):
 			enc_list.append(enc[0])
-			profiles_dict[enc[0]]=enc[1]['DRUG_EXACT_NAME'].tolist()
+			profiles_dict[enc[0]]=enc[1]['FORMULARY_DRUG_CD'].tolist()
 			enc_profiles = self.build_enc_profiles(enc)
 			# Convert each profile to list
 			for profile in enc_profiles.groupby(level='profile', sort=False):
@@ -150,8 +148,8 @@ class preprocessor():
 	def make_profile_lists(self, profile):
 		# make a list with all medications in profile
 		mask = profile[1].index.get_level_values('profile')==profile[1].index.get_level_values('addition_number')
-		target = profile[1][mask]['DRUG_EXACT_NAME'].astype(str).values[0]
-		seq_to_append = profile[1]['DRUG_EXACT_NAME'].tolist()
+		target = profile[1][mask]['FORMULARY_DRUG_CD'].astype(str).values[0]
+		seq_to_append = profile[1]['FORMULARY_DRUG_CD'].tolist()
 		target_index = len(seq_to_append) - 1 - seq_to_append[::-1].index(target)
 		seq_to_append.pop(target_index)
 		# remove row of target from profile
@@ -159,7 +157,7 @@ class preprocessor():
 		# select only active medications and make another list with those
 		active_meds = filtered_profile.loc[filtered_profile['active'] == 1].copy()
 		# make lists of contents of active profile to prepare for multi-hot encoding
-		active_meds_to_append = active_meds['DRUG_EXACT_NAME'].tolist()
+		active_meds_to_append = active_meds['FORMULARY_DRUG_CD'].tolist()
 		depa_to_append = active_meds['CURR_SERVICE'].unique().tolist()
 		return target, seq_to_append, active_meds_to_append, depa_to_append
 
