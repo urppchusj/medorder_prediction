@@ -57,7 +57,13 @@ class preprocessor():
 		# Generate unique drug id strings from the drug and prod_strength columns
 		self.raw_profile_data['DRUG_EXACT_NAME'] = self.raw_profile_data['DRUG'] + ' ' + self.raw_profile_data['PROD_STRENGTH']
 		self.raw_profile_data['DRUG_EXACT_NAME'] = self.raw_profile_data['DRUG_EXACT_NAME'].str.replace(' ', '_')
-		# Convert datetime string in services to actual datetimes and sort
+		# Convert datetime string in services to actual datetimes and sort. 
+		# Here we normalize the transfer datetimes (set all time parts to 
+		# 00:00:00) because in MIMIC drug start and end times are all at 
+		# 00:00:00. This introduces noise in the data but is necessary because
+		# it is impossible to know when the drug was prescribed in relation 
+		# to the transfer. We approximate that all orders were prescribed on
+		# the last department the patient was on that day.
 		depa_data['TRANSFER_DATETIME'] = pd.to_datetime(depa_data['TRANSFERTIME'], format='%Y%m%d %H:%M:%S')
 		depa_data['TRANSFER_DATETIME'] = depa_data['TRANSFER_DATETIME'].dt.normalize()
 		depa_data = depa_data.drop(['TRANSFERTIME'], axis=1)
@@ -123,7 +129,15 @@ class preprocessor():
 			# For each addition, generate a profile of all medications with a datetime of beginning
 			# before or at the same time of the addition
 			profile_at_time = enc[1].loc[(enc[1]['datetime_beg'] <= addition.datetime_beg)].copy()
-			# Determine if each medication was active at the time of addition
+			# Determine if each medication was active at the time of addition.
+			# Here this is done differently than in the original approach. In 
+			# the original approach we used > as an operator. Here because
+			# the time is always 00:00:00 we use >= . This approximates that
+			# all orders that were prescribed on that day were prescribed at
+			# once at the beginning of the day and all discontinuations occured
+			# at once at the end of the day. This is obviously inaccurate and 
+			# introduces noise but it cannot be done more precisely on this
+			# dataset.
 			profile_at_time['active'] = np.where(profile_at_time['datetime_end'] >= addition.datetime_beg, 1, 0)
 			# Manipulate indexes to have three levels: encounter, profile and addition
 			profile_at_time['profile'] = addition.Index[1]
