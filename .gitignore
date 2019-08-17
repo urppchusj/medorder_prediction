@@ -1,0 +1,12 @@
+__pycache__
+.vscode
+paper/__pycache__
+mimic/data/ADMISSIONS.csv
+mimic/data/definitions.csv
+mimic/data/PRESCRIPTIONS.csv
+mimic/data/SERVICES.csv
+paper/data
+logs
+model
+preprocessed_data
+preprocessed_data_mimic
