@@ -6,7 +6,7 @@ Prediction of the next medication order to assist prescription verification by p
 
 ## Motivation
 
-Health-system pharmacists review almost all medication orders for hospitalized patients. Considering that most orders contain no errors, especially in the era of CPOE with CDS,<sup>[1](https://doi.org/10.2146/ajhp060617)</sup> pharmacists have called for technology to enable triaging routine orders to less extensive review, in order to focus pharmacist attention on unusual orders requiring.[2](https://doi.org/10.2146/ajhp070671),[3](https://doi.org/10.2146/ajhp080410),[4](https://doi.org/10.2146/ajhp090095)
+Health-system pharmacists review almost all medication orders for hospitalized patients. Considering that most orders contain no errors, especially in the era of CPOE with CDS,<sup>[1](https://doi.org/10.2146/ajhp060617)</sup> pharmacists have called for technology to enable triaging routine orders to less extensive review, in order to focus pharmacist attention on unusual orders requiring.<sup>[2](https://doi.org/10.2146/ajhp070671),[3](https://doi.org/10.2146/ajhp080410),[4](https://doi.org/10.2146/ajhp090095)</sup>
 
 We propose a machine learning model that learns medication order patterns from historical data, and then predicts the next medication order given a patient's previous order sequence, and currently active drugs. The predictions would be compared to actual orders. Our hypothesis is that orders ranking low in predictions would be unusual, while orders ranking high would be more likely to be routine or unremarkable.
 
