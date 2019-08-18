@@ -25,7 +25,7 @@ The output is the prediction of the next medication order (the drug only, not th
 
 There are four main characteristics of the MIMIC dataset which make it less reliable for this model:
 
-1. The MIMIC data only comes from ICU patients. As shown in our paper, ICU patients were one of the populations where our model showed the worst performance, probably because of the variability and the complexity of these patients. It would be interesting to explore how to increase the performance on this subset of patients, possibly by including more clinical data as features.
+1. The MIMIC data only comes from ICU patients. As shown in our paper, ICU patients were one of the populations where our model showed the worst performance, probably because of the variability and the complexity of these patients. It would be interesting to explore how to increase the performance on this subset of patients, possibly by including more clinical data as features. Also, the same drugs may be used in patients in and out of ICU, and the information about the usage trends outside of ICU may be useful to the model, especially for the word2vec embeddings. This data is not present in MIMIC.
 2. The MIMIC data was time-shifted inconsistently between patients. Medication use patterns follow trends over time, influcended by drug availability (new drugs on the market, drugs withdrawn from markets, drug shortages) and clinical pratices following new evidence being published. The inconsistent time-shifting destroys these trends; the dataset becomes effectiely pre-shuffled. In our original implementation, we were careful to use only the [Scikit-Learn TimeSeries Split](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html) in cross-validation to preserve these patterns, and our test set was chronologically after our training-validation set and was preprocessed separately. In our MIMIC demonstration, we changed these to regular splits and our preprocessor generates the training-validation and test sets from a single file.
 3. The MIMIC prescription data does not include the times of the orders, only the dates. This destroys the sequence of orders within a single day. In NLP, this would be equivalent to shuffling each sentence within a text and then trying to extract semantic information. This makes the creation of word2vec embeddings much more difficult because the exact context of the orders (i.e. those that occured immediately before and after) is destroyed. This shows in analogy accuracy which does not go above 20-25% on MIMIC while we achived close to 80% on our data. The sequence of orders, an important input to the model, is therefore inconsistent. Also, it becomes impossible to reliably know whether orders within the same day as the target were discontinued or not when the target was prescribed, descreasing the reliability of our multi-hot vector input.
 4. The MIMIC dataset does not include the pharmacological classes of the drugs. The GSN (generic sequence number) allows linkage of the drug data to [First Databank](http://phsirx.com/blog/gpi-vs-gsn), which could allow extraction of classes, but this database is proprietary. One of our model inputs is therefore eliminated.
@@ -44,6 +44,17 @@ This file is not formatted to generate a Jupyter notebook, can only be run as a 
 
 The `/paper` file cannot be used without the original source data, but could be adapted to data from another source with the appropriate modifications. See the `/mimic` file for an example.
 
+This file will transform the source files, which should be essentialy lists of orders and associated data, into several pickle files containing dictionaries where the keys are encounter ids and the values are the features for this encounter, in chronological order.
+
+`enc_list.pkl` is a simple list of encounter ids, to allow for easy splitting into sets.
+`profiles_list.pkl` is the list of the raw order sequences in each encounter, to train the word2vec embeddings.
+
+After being loaded and processed by the data loader in `components.py`, each order gets considered as a label (`targets.pkl`). The features associated with this label are:
+1. The sequence of orders preceding it within the encounter (`seq_list.pkl`). Orders happening at the exact same time are kept in the sequence. In MIMIC, because order times are precise to the day, this means each order that happened in the same day is present in the sequence (except the label).
+2. The active drugs at the time the label was ordered (`active_meds_list.pkl`). Orders happening at the same time as the label are considered active.
+3. The active pharmacological classes at the time the label was ordered (`active_classes_list.pkl`). This is not created by the MIMIC preprocessor.
+4. The departement where the order happened (`depa_list.pkl`).
+
 #### paper version
 
 Arguments:
@@ -58,7 +69,7 @@ Takes no arguments. Requires the ADMISSIONS.csv, PRESCRIPTIONS.csv and SERVICES.
 
 ### w2v_embeddings.py
 
-To be completed
+Find the best word2vec training hyperparameters to maximize the accuracy on a list of analogies. We provide a list of analogies 
 
 
 ## Prerequisites
