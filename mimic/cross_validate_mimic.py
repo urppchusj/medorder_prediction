@@ -63,11 +63,11 @@ RESTRICT_SAMPLE_SIZE = 1000
 # for explanation at https://radimrehurek.com/gensim/models/word2vec.html
 
 #%%
-W2V_ALPHA = 0.01
-W2V_ITER = 64
-W2V_EMBEDDING_DIM = 256
+W2V_ALPHA = 0.013
+W2V_ITER = 32
+W2V_EMBEDDING_DIM = 64
 W2V_HS = 0
-W2V_SG =  0
+W2V_SG =  1
 W2V_MIN_COUNT = 5
 W2V_WORKERS = cpu_count()
 
