@@ -47,11 +47,11 @@ The `/paper` file cannot be used without the original source data, but could be 
 #### paper version
 
 Arguments:
-'''python
+```
 --sourcefile	indicates where the original data, in csv format, is located.
 --definitionsfile	indiciates a separate file linking medication numbers to full medication names and pharmacological classes.
 --numyears	indicates how many years of data to process from the file (starting from the most recent). Defaults to 5.
-'''
+```
 
 #### mimic version
 Takes no arguments. Requires the ADMISSIONS.csv, PRESCRIPTIONS.csv and SERVICES.csv files from MIMIC-III in `/mimic/data/`.
