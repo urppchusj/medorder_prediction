@@ -19,11 +19,11 @@ import tensorflow as tf
 from gensim.sklearn_api import W2VTransformer
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import ShuffleSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 
-from mimic.components_mimic import (TransformedGenerator, check_ipynb, data,
+from components_mimic import (TransformedGenerator, check_ipynb, data,
                               neural_network, pse_helper_functions,
                               visualization)
 
@@ -140,7 +140,7 @@ pse_a = phf.pse_a
 sizes_list = []
 to_concat = []
 split = 0
-for train, test in TimeSeriesSplit(n_splits=5).split(d.enc):
+for train, test in ShuffleSplit(n_splits=5).split(d.enc):
 	print('Performing cross-validation split: {}'.format(split))
 	
 	# prepare the data for the fold

@@ -1,5 +1,5 @@
 #%%[markdown]
-# # Start training the model.
+# # Start training the model WITHOUT a validation set (use full training set).
 
 #%%[markdown]
 # ## Imports
@@ -20,7 +20,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 
-from paper.components import (TransformedGenerator, check_ipynb, data,
+from components import (TransformedGenerator, check_ipynb, data,
                         neural_network, pse_helper_functions, visualization)
 
 #%%[markdown]
@@ -35,7 +35,7 @@ from paper.components import (TransformedGenerator, check_ipynb, data,
 
 #%%
 SAVE_STAMP = datetime.now().strftime('%Y%m%d-%H%M')
-SAVE_PATH = os.path.join(os.getcwd(), 'paper', 'model', SAVE_STAMP + 'training')
+SAVE_PATH = os.path.join(os.getcwd(), 'paper', 'model', SAVE_STAMP + 'final_training')
 pathlib.Path(SAVE_PATH).mkdir(parents=True, exist_ok=True)
 
 #%%[markdown]
@@ -54,6 +54,7 @@ pathlib.Path(SAVE_PATH).mkdir(parents=True, exist_ok=True)
 RESTRICT_DATA = False
 RESTRICT_SAMPLE_SIZE = 1000
 DATA_DIR = '5yr'
+N_TRAINING_EPOCHS = 5
 
 #%%[markdown]
 # ### Word2vec hyperparameters
@@ -104,7 +105,7 @@ BATCH_SIZE = 256
 # #### Save the hyperparameters
 
 #%%
-joblib.dump((DATA_DIR, BATCH_SIZE, SEQUENCE_LENGTH, W2V_EMBEDDING_DIM), os.path.join(SAVE_PATH, 'hp.joblib'))
+joblib.dump((N_TRAINING_EPOCHS, DATA_DIR, BATCH_SIZE, SEQUENCE_LENGTH, W2V_EMBEDDING_DIM), os.path.join(SAVE_PATH, 'hp.joblib'))
 
 #%%[markdown]
 # ## Execution
@@ -136,16 +137,10 @@ if RESTRICT_DATA:
 		pickle.dump(d.enc, file)
 
 #%%[markdown]
-# #### Split encounters into a train and test set
-
-#%%
-d.split()
-
-#%%[markdown]
 # #### Make the data lists
 
 #%%
-profiles_train, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, targets_test, seq_test, active_meds_test, active_classes_test, depa_test = d.make_lists()
+profiles_train, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, _, _, _, _, _ = d.make_lists(get_test=False)
 
 #%%[markdown]
 # ### Word2vec embeddings
@@ -237,14 +232,12 @@ output_n_classes = len(le.classes_)
 #%%
 train_generator = TransformedGenerator(w2v_step, pse, le, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE)
 
-test_generator = TransformedGenerator(w2v_step, pse, le, targets_test, seq_test, active_meds_test, active_classes_test, depa_test, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE, shuffle=False)
-
 #%%[markdown]
 # #### Instantiate the model
 
 #%%
 n = neural_network()
-callbacks = n.callbacks(SAVE_PATH)
+callbacks = n.callbacks(SAVE_PATH, mode='train_no_valid')
 model = n.define_model(LSTM_SIZE, N_LSTM, DENSE_PSE_SIZE, CONCAT_SIZE, DENSE_SIZE, DROPOUT, L2_REG, SEQUENCE_LENGTH, W2V_EMBEDDING_DIM, pse_shape, N_PSE_DENSE, N_DENSE, output_n_classes)
 print(model.summary())
 tf.keras.utils.plot_model(model, to_file=os.path.join(SAVE_PATH, 'model.png'))
@@ -265,20 +258,9 @@ else:
 	verbose=1
 
 model.fit_generator(train_generator,
-	epochs=1000,
+	epochs=N_TRAINING_EPOCHS,
 	callbacks=callbacks,
-	validation_data=test_generator,
 	verbose=verbose)
 
 model.save(os.path.join(SAVE_PATH, 'model.h5'))
 
-#%%[markdown]
-# #### Plot the loss and accuracy during training
-
-#%%
-v = visualization()
-
-history_df = pd.read_csv(os.path.join(SAVE_PATH, 'training_history.csv'))
-
-v.plot_accuracy_history(history_df, SAVE_PATH)
-v.plot_loss_history(history_df, SAVE_PATH)

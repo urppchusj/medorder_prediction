@@ -270,27 +270,36 @@ class neural_network:
 		return (sparse_top_k_categorical_accuracy(y_true, y_pred, k=30))
 
 	# Callbacks during training
-	def callbacks(self, save_path, callback_mode='full'):
+	def callbacks(self, save_path, callback_mode='train_with_valid', n_done_epochs=0):
 
 		# Assign simple names
 		CSVLogger = keras.callbacks.CSVLogger
 		EarlyStopping = keras.callbacks.EarlyStopping
 		ReduceLROnPlateau = keras.callbacks.ReduceLROnPlateau
 		ModelCheckpoint = keras.callbacks.ModelCheckpoint
+		LearningRateScheduler = keras.callbacks.LearningRateScheduler
 
 		# Define the callbacks
-		
-		# Base callbacks
-		rlr_callback = ReduceLROnPlateau(monitor='val_loss', patience=3, min_delta=0.0005)
-		earlystop_callback = EarlyStopping(monitor='val_loss', min_delta=0.0001, patience=5, verbose=1, restore_best_weights=True)
-		
-		# Additional callbacks for full model training
-		if callback_mode == 'full':
-			mc_callback = ModelCheckpoint(os.path.join(save_path, 'partially_trained_model.h5'), verbose=1)
-			csv_callback = CSVLogger(os.path.join(save_path, 'training_history.csv'), append=True)
-			return [rlr_callback, earlystop_callback, mc_callback, csv_callback]
-		elif callback_mode == 'cross_val':
-			return [rlr_callback, earlystop_callback]
+		callbacks = []
+
+		# Train with valid and cross-val callbacks
+		if callback_mode == 'train_with_valid' or callback_mode == 'cross_val':
+			callbacks.append(ReduceLROnPlateau(monitor='val_loss', patience=3, min_delta=0.0005))
+			callbacks.append(EarlyStopping(monitor='val_loss', min_delta=0.0001, patience=5, verbose=1, restore_best_weights=True))
+		# Train with valid and train no valid callbacks
+		if callback_mode == 'train_with_valid' or callback_mode == 'train_no_valid':
+			callbacks.append(ModelCheckpoint(os.path.join(save_path, 'partially_trained_model.h5'), verbose=1))
+			callbacks.append(CSVLogger(os.path.join(save_path, 'training_history.csv'), append=True))
+		if callback_mode == 'train_no_valid':
+			callbacks.append(LearningRateScheduler(self.schedule, verbose=1))
+			callbacks.append(EpochLoggerCallback(save_path, n_done_epochs))
+		return callbacks
+
+	def schedule(self, i, cur_lr):
+		# The schedule is hardcoded here from the results
+		# of a training with validation
+		new_lr = cur_lr
+		return new_lr
 
 	def define_model(self, sequence_size, n_add_seq_layers, dense_pse_size, concat_size, dense_size, dropout, l2_reg, sequence_length, w2v_embedding_dim, pse_shape, n_add_pse_dense, n_dense, output_n_classes):
 		
@@ -354,6 +363,24 @@ class neural_network:
 		model.compile(optimizer='Adam', loss=['sparse_categorical_crossentropy'], metrics=['sparse_categorical_accuracy', self.sparse_top10_accuracy, self.sparse_top30_accuracy])
 		
 		return model
+
+
+class EpochLoggerCallback(keras.callbacks.Callback):
+
+	'''
+	Custom callback that logs done epochs so that training
+	can be resumed and continue for the correct number of
+	total epochs
+	'''
+
+	def __init__(self, save_path, n_done_epochs=0):
+		self.save_path = save_path
+		self.starting_epoch=n_done_epochs
+
+	def on_epoch_end(self, epoch, logs=None):
+		self.done_epochs=self.starting_epoch + epoch
+		with open(os.path.join(self.save_path, 'done_epochs.pkl'), mode='wb') as file:
+			pickle.dump(self.done_epochs, file)
 
 
 class visualization:

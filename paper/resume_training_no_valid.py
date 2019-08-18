@@ -1,5 +1,5 @@
 #%%[markdown]
-# # Resume training the model after interruption.
+# # Resume training the model after interruption WITHOUT validation (use the entire training set).
 
 #%%[markdown]
 # ## Imports
@@ -20,7 +20,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 
-from mimic.components_mimic import (TransformedGenerator, check_ipynb, data,
+from components import (TransformedGenerator, check_ipynb, data,
                         neural_network, pse_helper_functions, visualization)
 
 #%%[markdown]
@@ -34,8 +34,8 @@ from mimic.components_mimic import (TransformedGenerator, check_ipynb, data,
 # Will continue saving there.
 
 #%%
-SAVE_DIR = '20190813-2105training'
-save_path = os.path.join('mimic', 'model', SAVE_DIR)
+SAVE_DIR = '20190811-0047training'
+save_path = os.path.join('paper', 'model', SAVE_DIR)
 
 #%%[markdown]
 # ## Execution
@@ -57,9 +57,9 @@ in_ipynb = check_ipynb().is_inipynb()
 # #### Load the data
 
 #%%
-BATCH_SIZE, SEQUENCE_LENGTH, W2V_EMBEDDING_DIM = joblib.load(os.path.join(save_path, 'hp.joblib'))
+N_TRAINING_EPOCHS, DATA_DIR, BATCH_SIZE, SEQUENCE_LENGTH, W2V_EMBEDDING_DIM = joblib.load(os.path.join(save_path, 'hp.joblib'))
 
-d = data()
+d = data(DATA_DIR)
 
 if os.path.isfile(os.path.join(save_path, 'sampled_encs.pkl')):
 	enc_file = os.path.join(save_path, 'sampled_encs.pkl')
@@ -70,16 +70,10 @@ else:
 d.load_data(previous_encs_path=enc_file, get_profiles=False)
 
 #%%[markdown]
-# #### Split encounters into a train and test set
-
-#%%
-d.split()
-
-#%%[markdown]
 # #### Make the data lists
 
 #%%
-_, targets_train, seq_train, active_meds_train, depa_train, targets_test, seq_test, active_meds_test, depa_test = d.make_lists()
+_, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, _, _, _, _, _ = d.make_lists(get_test=False)
 
 #%%[markdown]
 # ### Word2vec embeddings
@@ -115,6 +109,13 @@ le = joblib.load(os.path.join(save_path, 'le.joblib'))
 # Load the partially fitted neural network and resume training
 
 #%%[markdown]
+# Load the number of epochs previously completed
+
+#%%
+with open(os.path.join(save_path, 'done_epochs.pkl'), mode='rb') as file:
+	N_DONE_EPOCHS = pickle.load(file)
+
+#%%[markdown]
 # Get the variables necessary to train the model from
 # the fitted scikit-learn pipelines.
 
@@ -127,16 +128,14 @@ output_n_classes = len(le.classes_)
 # #### Sequence generators
 
 #%%
-train_generator = TransformedGenerator(w2v_step, pse, le, targets_train, seq_train, active_meds_train, depa_train, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE)
-
-test_generator = TransformedGenerator(w2v_step, pse, le, targets_test, seq_test, active_meds_test, depa_test, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE, shuffle=False)
+train_generator = TransformedGenerator(w2v_step, pse, le, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE)
 
 #%%[markdown]
 # #### Instantiate the model
 
 #%%
 n = neural_network()
-callbacks = n.callbacks(save_path)
+callbacks = n.callbacks(save_path, callback_mode='train_no_valid', n_done_epochs=N_DONE_EPOCHS)
 model = tf.keras.models.load_model(os.path.join(save_path, 'partially_trained_model.h5'), custom_objects={'sparse_top10_accuracy':n.sparse_top10_accuracy, 'sparse_top30_accuracy':n.sparse_top30_accuracy})
 
 #%%[markdown]
@@ -155,20 +154,9 @@ else:
 	verbose=1
 
 model.fit_generator(train_generator,
-	epochs=1000,
+	epochs=(N_TRAINING_EPOCHS-N_DONE_EPOCHS),
 	callbacks=callbacks,
-	validation_data=test_generator,
 	verbose=verbose)
 
 model.save(os.path.join(save_path, 'model.h5'))
 
-#%%[markdown]
-# #### Plot the loss and accuracy during training
-
-#%%
-v = visualization()
-
-history_df = pd.read_csv(os.path.join(save_path, 'training_history.csv'))
-
-v.plot_accuracy_history(history_df, save_path)
-v.plot_loss_history(history_df, save_path)

@@ -1,5 +1,5 @@
 #%%[markdown]
-# # Resume training the model after interruption.
+# # Resume training the model after interruption with validation.
 
 #%%[markdown]
 # ## Imports
@@ -20,7 +20,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 
-from paper.components import (TransformedGenerator, check_ipynb, data,
+from components import (TransformedGenerator, check_ipynb, data,
                         neural_network, pse_helper_functions, visualization)
 
 #%%[markdown]
