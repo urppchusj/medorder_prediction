@@ -261,3 +261,6 @@ else:
 plt.gcf().clear()
 
 #%%
+print('Best hyperparameters for word2vec embeddings: {}'.format(w2v_gscv.best_params_))
+
+#%%
