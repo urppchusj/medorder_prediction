@@ -219,8 +219,8 @@ class TransformedGenerator(keras.utils.Sequence):
 		# Here it is SUPER important to indicate dtype='float32' otherwise the pad_sequences
 		# function will transform everything into integers
 		transformed_w2v = keras.preprocessing.sequence.pad_sequences(transformed_w2v, maxlen=self.sequence_length, dtype='float32')
-		# Transform the active meds, pharmacological classes and department into a multi-hot vector
 		X['w2v_input']=transformed_w2v
+		# Transform the active meds, pharmacological classes and department into a multi-hot vector
 		# Get batches
 		batch_am = self.X_am[idx * self.batch_size:(idx+1) * self.batch_size]
 		batch_ac = self.X_ac[idx * self.batch_size:(idx+1) * self.batch_size]
