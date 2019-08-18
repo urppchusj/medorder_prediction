@@ -25,7 +25,7 @@ from sklearn.model_selection import (GridSearchCV, TimeSeriesSplit,
                                      cross_validate)
 from sklearn.pipeline import Pipeline
 
-from paper.components import check_ipynb
+from components import check_ipynb
 
 #%%[markdown]
 # ## Global variables

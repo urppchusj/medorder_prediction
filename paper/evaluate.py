@@ -24,7 +24,7 @@ from sklearn.metrics import classification_report, roc_auc_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, label_binarize
 
-from paper.components import (TransformedGenerator, check_ipynb, data,
+from components import (TransformedGenerator, check_ipynb, data,
                         neural_network, pse_helper_functions, visualization)
 
 #%%[markdown]

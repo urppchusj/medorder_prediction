@@ -24,7 +24,7 @@ from sklearn.metrics import silhouette_score
 from sklearn.model_selection import GridSearchCV, cross_validate
 from sklearn.pipeline import Pipeline
 
-from mimic.components_mimic import check_ipynb
+from components_mimic import check_ipynb
 
 #%%[markdown]
 # ## Global variables

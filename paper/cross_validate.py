@@ -23,7 +23,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 
-from paper.components import (TransformedGenerator, check_ipynb, data,
+from components import (TransformedGenerator, check_ipynb, data,
                         neural_network, pse_helper_functions, visualization)
 
 #%%[markdown]
