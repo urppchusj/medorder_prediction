@@ -20,7 +20,8 @@ from gensim.sklearn_api import W2VTransformer
 from matplotlib import pyplot as plt
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics import classification_report, roc_auc_score
+from sklearn.metrics import (classification_report,
+                             precision_recall_fscore_support, roc_auc_score)
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, label_binarize
 
@@ -127,11 +128,11 @@ output_n_classes = len(le.classes_)
 
 #%%
 pre_discard_n_targets = len(set(targets))
-targets = [target for target in targets if target in w2v_step.gensim_model.wv.index2entity]
-seq = [seq for seq, target in zip(seq, targets) if target in w2v_step.gensim_model.wv.index2entity]
-active_profiles = [active_profile for active_profile, target in zip(active_meds, targets) if target in w2v_step.gensim_model.wv.index2entity]
-active_classes = [active_class for active_class, target in zip(active_classes, targets) if target in w2v_step.gensim_model.wv.index2entity]
-depa = [depa for depa, target in zip(depa, targets) if target in w2v_step.gensim_model.wv.index2entity]
+targets = [target for target in targets if target in le.classes_]
+seq = [seq for seq, target in zip(seq, targets) if target in le.classes_]
+active_profiles = [active_profile for active_profile, target in zip(active_meds, targets) if target in le.classes_]
+active_classes = [active_class for active_class, target in zip(active_classes, targets) if target in le.classes_]
+depa = [depa for depa, target in zip(depa, targets) if target in le.classes_]
 post_discard_n_targets = len(set(targets))
 
 print('Predicting on {} samples, {:.2f} % of {} samples, {} samples discarded because of unseen labels.'.format(len(targets), 100*post_discard_n_targets/pre_discard_n_targets, pre_discard_n_targets, pre_discard_n_targets-post_discard_n_targets))
@@ -196,10 +197,38 @@ cr_df.to_csv(os.path.join(save_path,  'eval_classification_report.csv'))
 binary_labels = label_binarize(targets, le.classes_)
 filtered_binary_labels = np.delete(binary_labels,np.where(~binary_labels.any(axis=0))[0], axis=1)
 filtered_predictions = np.delete(predictions,np.where(~binary_labels.any(axis=0))[0], axis=1)
-rocauc_ma = roc_auc_score(filtered_binary_labels, filtered_predictions, average='macro')
-rocauc_mi = roc_auc_score(filtered_binary_labels, filtered_predictions, average='micro')
 rocauc_we = roc_auc_score(filtered_binary_labels, filtered_predictions, average='weighted')
-print('Macro average ROC AUC score for present labels: {:.3f}'.format(rocauc_ma))
-print('Micro average ROC AUC score for present labels: {:.3f}'.format(rocauc_mi))
 print('Weighted average ROC AUC score for present labels: {:.3f}'.format(rocauc_we))
 print(cr_df.describe())
+
+#%%
+department_data = pd.read_csv('paper/data/depas.csv', sep=';')
+department_data.set_index('Numéro', inplace=True)
+department_cat_dict = department_data['Catégorie'].to_dict()
+departments = [list(active_med[-1])[0] for active_med in active_meds]
+categorized_departments = [department_cat_dict[department] for department in departments]
+unique_categorized_departments = list(set(categorized_departments))
+for department in unique_categorized_departments:
+	print('Results for category: {}'.format(department))
+	indices = [i for i, value in enumerate(categorized_departments) if value == department]
+	selected_seq = [seq[i] for i in indices]
+	selected_active_meds = [active_meds[i] for i in indices]
+	selected_active_classes = [active_classes[i] for i in indices]
+	selected_depa = [depa[i] for i in indices]
+	selected_targets = [targets[i] for i in indices]
+	eval_generator = TransformedGenerator(w2v_step, pse, le, selected_targets, selected_seq, selected_active_meds, selected_active_classes, selected_depa, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE)
+	results = model.evaluate_generator(eval_generator, verbose=1)
+	predictions = model.predict_generator(eval_generator, verbose=1)
+	print('Evaluation results')
+	print('Predicting on {} samples, {:.2f} % of {} samples.'.format(len(selected_targets), (100*len(selected_targets))/len(targets), len(targets)))
+	print('Predictions for {} classes'.format(len(le.classes_)))
+	print('{} classes reprensented in targets'.format(len(set(selected_targets))))
+	for metric, result in zip(model.metrics_names, results):
+		print('Metric: {}   Score: {:.5f}'.format(metric,result))
+	prediction_labels = le.inverse_transform([np.argmax(prediction) for prediction in predictions])
+	binary_labels = label_binarize(selected_targets, le.classes_)
+	filtered_binary_labels = np.delete(binary_labels,np.where(~binary_labels.any(axis=0))[0], axis=1)
+	filtered_predictions = np.delete(predictions,np.where(~binary_labels.any(axis=0))[0], axis=1)
+	p_we, r_we, _, _ = precision_recall_fscore_support(selected_targets, prediction_labels, average='weighted')
+	print('Weighted average precision score for present labels: {:.3f}'.format(p_we))
+	print('Weighted average recall score for present labels: {:.3f}'.format(r_we))
