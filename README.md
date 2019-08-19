@@ -30,7 +30,7 @@ There are four main characteristics of the MIMIC dataset which make it less reli
 
 # Files
 
-We present the files in the order they should be run to go from the original data files to a trained and evaluated model. The python script files are provided as commented files that [can be used to generate Jupyter Notebooks](https://code.visualstudio.com/docs/python/jupyter-support) or can be run as-is in the terminal. Some files are also provided directly as Jupyer Notebooks.
+We present the files in the order they should be run to go from the original data files to a trained and evaluated model. The python script files are provided as commented files that [can be used to generate Jupyter Notebooks](https://code.visualstudio.com/docs/python/jupyter-support) or can be run as-is in the terminal. Some files are also provided directly as Jupyter Notebooks.
 
 The same files can be found in the `/paper` and the `/mimic` subdirectories. The `/paper` subdirectory shows the method we used on our dataset as described in our paper. These files could be adapted and used by other researchers to replicate our approach on data from other hospitals. The `/mimic` subdirectory is a working implementation on [MIMIC-III](http://dx.doi.org/10.1038/sdata.2016.35) as a demonstration taking into account the differences of the MIMIC data as compared to ours.
 
@@ -151,10 +151,10 @@ Maxime Thibault.
 
 # References
 
-Paper currently under peer review for publication.
-Abstract presented at the Machine Learning for Healthcare 2019 conference
-[Abstract](https://www.mlforhc.org/accepted-papers) (spotlight session 6 abstract 2)
-[Spotlight presentation](https://www.ustream.tv/recorded/123483908) (from 52:15 to 54:15)
+Paper currently under peer review for publication.  
+Abstract presented at the Machine Learning for Healthcare 2019 conference  
+[Abstract](https://www.mlforhc.org/accepted-papers) (spotlight session 6 abstract 2)  
+[Spotlight presentation](https://www.ustream.tv/recorded/123483908) (from 52:15 to 54:15)  
 [Poster](http://bit.ly/2JNGNP2)
 
 # License
