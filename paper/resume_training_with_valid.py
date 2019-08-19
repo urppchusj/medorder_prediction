@@ -70,7 +70,7 @@ else:
 d.load_data(previous_encs_path=enc_file, get_profiles=False)
 
 #%%[markdown]
-# #### Split encounters into a train and test set
+# #### Split encounters into a train and validation set
 
 #%%
 d.split()
@@ -79,7 +79,7 @@ d.split()
 # #### Make the data lists
 
 #%%
-_, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, targets_test, seq_test, active_meds_test, active_classes_test, depa_test = d.make_lists()
+_, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, targets_val, seq_val, active_meds_val, active_classes_val, depa_val = d.make_lists()
 
 #%%[markdown]
 # ### Word2vec embeddings
@@ -129,7 +129,7 @@ output_n_classes = len(le.classes_)
 #%%
 train_generator = TransformedGenerator(w2v_step, pse, le, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE)
 
-test_generator = TransformedGenerator(w2v_step, pse, le, targets_test, seq_test, active_meds_test, active_classes_test, depa_test, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE, shuffle=False)
+val_generator = TransformedGenerator(w2v_step, pse, le, targets_val, seq_val, active_meds_val, active_classes_val, depa_val, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE, shuffle=False)
 
 #%%[markdown]
 # #### Instantiate the model
@@ -157,7 +157,7 @@ else:
 model.fit_generator(train_generator,
 	epochs=1000,
 	callbacks=callbacks,
-	validation_data=test_generator,
+	validation_data=val_generator,
 	verbose=verbose)
 
 model.save(os.path.join(save_path, 'model.h5'))

@@ -192,15 +192,15 @@ class preprocessor():
 		with open(os.path.join(self.data_save_path, 'enc_list.pkl'), mode='wb') as file:
 			pickle.dump(enc_train, file)
 		# Test
-		with open(os.path.join(self.data_save_path, 'valid_targets_list.pkl'), mode='wb') as file:
+		with open(os.path.join(self.data_save_path, 'test_targets_list.pkl'), mode='wb') as file:
 			pickle.dump(targets_dict_test, file)
-		with open(os.path.join(self.data_save_path, 'valid_seq_list.pkl'), mode='wb') as file:
+		with open(os.path.join(self.data_save_path, 'test_seq_list.pkl'), mode='wb') as file:
 			pickle.dump(seq_dict_test, file)
-		with open(os.path.join(self.data_save_path, 'valid_active_meds_list.pkl'), mode='wb') as file:
+		with open(os.path.join(self.data_save_path, 'test_active_meds_list.pkl'), mode='wb') as file:
 			pickle.dump(active_meds_dict_test, file)
-		with open(os.path.join(self.data_save_path, 'valid_depa_list.pkl'), mode='wb') as file:
+		with open(os.path.join(self.data_save_path, 'test_depa_list.pkl'), mode='wb') as file:
 			pickle.dump(depa_dict_test, file)
-		with open(os.path.join(self.data_save_path, 'valid_enc_list.pkl'), mode='wb') as file:
+		with open(os.path.join(self.data_save_path, 'test_enc_list.pkl'), mode='wb') as file:
 			pickle.dump(enc_test, file)
 			
 

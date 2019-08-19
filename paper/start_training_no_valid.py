@@ -140,7 +140,7 @@ if RESTRICT_DATA:
 # #### Make the data lists
 
 #%%
-profiles_train, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, _, _, _, _, _ = d.make_lists(get_test=False)
+profiles_train, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, _, _, _, _, _ = d.make_lists(get_valid=False)
 
 #%%[markdown]
 # ### Word2vec embeddings
@@ -237,7 +237,7 @@ train_generator = TransformedGenerator(w2v_step, pse, le, targets_train, seq_tra
 
 #%%
 n = neural_network()
-callbacks = n.callbacks(SAVE_PATH, mode='train_no_valid')
+callbacks = n.callbacks(SAVE_PATH, callback_mode='train_no_valid')
 model = n.define_model(LSTM_SIZE, N_LSTM, DENSE_PSE_SIZE, CONCAT_SIZE, DENSE_SIZE, DROPOUT, L2_REG, SEQUENCE_LENGTH, W2V_EMBEDDING_DIM, pse_shape, N_PSE_DENSE, N_DENSE, output_n_classes)
 print(model.summary())
 tf.keras.utils.plot_model(model, to_file=os.path.join(SAVE_PATH, 'model.png'))

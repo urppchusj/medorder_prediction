@@ -43,6 +43,20 @@ SAVE_DIR = '20190811-0047training'
 save_path = os.path.join('paper', 'model', SAVE_DIR)
 
 #%%[markdown]
+# ### Data variables
+#
+# DATA_DIR will get passed to the data class to indicate where to
+# find and load the preprocessed data. Must be a subdirectory of
+# the preprocessed_data directory, created by the preprocessor.
+# BE SURE TO INDICATE THE DIRECTORY WHERE THE TEST DATA IS
+# LOCATED !
+
+#%%
+RESTRICT_DATA = False
+RESTRICT_SAMPLE_SIZE = 1000
+DATA_DIR = 'test'
+
+#%%[markdown]
 # ## Execution
 
 #%%[markdown]
@@ -62,7 +76,7 @@ in_ipynb = check_ipynb().is_inipynb()
 # #### Load the data
 
 #%%
-DATA_DIR, BATCH_SIZE, SEQUENCE_LENGTH, W2V_EMBEDDING_DIM = joblib.load(os.path.join(save_path, 'hp.joblib'))
+_, BATCH_SIZE, SEQUENCE_LENGTH, W2V_EMBEDDING_DIM = joblib.load(os.path.join(save_path, 'hp.joblib'))
 
 d = data(DATA_DIR)
 
@@ -78,7 +92,7 @@ d.split()
 # #### Make the data lists
 
 #%%
-_, targets, seq, active_meds, active_classes, depa, _, _, _, _, _ = d.make_lists(get_test=False)
+_, targets, seq, active_meds, active_classes, depa, _, _, _, _, _ = d.make_lists(get_valid=False)
 
 #%%[markdown]
 # ### Word2vec embeddings

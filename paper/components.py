@@ -92,24 +92,24 @@ class data:
 			self.enc = [self.enc[i] for i in sorted(random.sample(range(len(self.enc)), restrict_sample_size))]
 		
 	def split(self):
-		print('Splitting encounters into train and test sets...')
-		self.enc_train, self.enc_test = train_test_split(self.enc, shuffle=False, test_size=0.25)
+		print('Splitting encounters into train and validation sets...')
+		self.enc_train, self.enc_val = train_test_split(self.enc, shuffle=False, test_size=0.25)
 
-	def cross_val_split(self, train_indices, test_indices):
-		print('Splitting encounters into train and test sets...')
+	def cross_val_split(self, train_indices, val_indices):
+		print('Splitting encounters into train and validation sets...')
 		self.enc_train = [self.enc[i] for i in train_indices]
-		self.enc_test = [self.enc[i] for i in test_indices]
+		self.enc_val = [self.enc[i] for i in val_indices]
 
-	def make_lists(self, get_test=True):
+	def make_lists(self, get_valid=True):
 		print('Building data lists...')
 
 		# Training set
 		print('Building training set...')
-		# If the get_test flag is set to False, put all encounters
+		# If the get_valid flag is set to False, put all encounters
 		# in the training set. This can be used for evaluation
 		# of a trained model, in this case the "training" set is
 		# actually an evaluation set that does not get split.
-		if get_test == False:
+		if get_valid == False:
 			self.enc_train = self.enc
 		# Allocate profiles only if they have been loaded
 		if self.profiles != None:
@@ -122,24 +122,24 @@ class data:
 		self.active_classes_train = [active_class for enc in self.enc_train for active_class in self.active_classes[enc]]
 		self.depa_train = [str(depa) for enc in self.enc_train for depa in self.depas[enc]]
 
-		# Make a list of unique targets in train set to exclude unseen targets from test set
+		# Make a list of unique targets in train set to exclude unseen targets from validation set
 		unique_targets_train = list(set(self.targets_train))
 
-		# Test set is built only if necessary
-		if get_test:
-			print('Building test set...')
+		# Validation set is built only if necessary
+		if get_valid:
+			print('Building validation set...')
 			# Filter out samples with previously unseen labels.
-			self.targets_test = [target for enc in self.enc_test for target in self.targets[enc] if target in unique_targets_train]
-			self.seq_test = [seq for enc in self.enc_test for seq, target in zip(self.seqs[enc], self.targets[enc]) if target in unique_targets_train]
-			self.active_meds_test = [active_med for enc in self.enc_test for active_med, target in zip(self.active_meds[enc], self.targets[enc]) if target in unique_targets_train]
-			self.active_classes_test = [active_class for enc in self.enc_test for active_class, target in zip(self.active_classes[enc], self.targets[enc]) if target in unique_targets_train]
-			self.depa_test = [str(depa) for enc in self.enc_test for depa, target in zip(self.depas[enc], self.targets[enc]) if target in unique_targets_train]
+			self.targets_val = [target for enc in self.enc_val for target in self.targets[enc] if target in unique_targets_train]
+			self.seq_val = [seq for enc in self.enc_val for seq, target in zip(self.seqs[enc], self.targets[enc]) if target in unique_targets_train]
+			self.active_meds_val = [active_med for enc in self.enc_val for active_med, target in zip(self.active_meds[enc], self.targets[enc]) if target in unique_targets_train]
+			self.active_classes_val = [active_class for enc in self.enc_val for active_class, target in zip(self.active_classes[enc], self.targets[enc]) if target in unique_targets_train]
+			self.depa_val = [str(depa) for enc in self.enc_val for depa, target in zip(self.depas[enc], self.targets[enc]) if target in unique_targets_train]
 		else:
-			self.targets_test = None
-			self.seq_test = None
-			self.active_meds_test = None
-			self.active_classes_test = None
-			self.depa_test = None
+			self.targets_val = None
+			self.seq_val = None
+			self.active_meds_val = None
+			self.active_classes_val = None
+			self.depa_val = None
 		
 		# Shuffle the training set.
 		print('Shuffling training set...')
@@ -150,10 +150,10 @@ class data:
 		# Print out the number of samples obtained to make sure they match.
 		print('Training set: Obtained {} profiles, {} targets, {} sequences, {} active meds, {} active classes, {} depas and {} encounters.'.format(len(self.profiles_train), len(self.targets_train), len(self.seq_train), len(self.active_meds_train), len(self.active_classes_train), len(self.depa_train), len(self.enc_train)))
 
-		if get_test == True:
-			print('Validation set: Obtained {} targets, {} sequences, {} active meds, {} active classes, {} depas and {} encounters.'.format(len(self.targets_test), len(self.seq_test), len(self.active_meds_test), len(self.active_classes_test), len(self.depa_test), len(self.enc_test)))
+		if get_valid == True:
+			print('Validation set: Obtained {} targets, {} sequences, {} active meds, {} active classes, {} depas and {} encounters.'.format(len(self.targets_val), len(self.seq_val), len(self.active_meds_val), len(self.active_classes_val), len(self.depa_val), len(self.enc_val)))
 
-		return self.profiles_train, self.targets_train, self.seq_train, self.active_meds_train, self.active_classes_train, self.depa_train, self.targets_test, self.seq_test, self.active_meds_test, self.active_classes_test, self.depa_test
+		return self.profiles_train, self.targets_train, self.seq_train, self.active_meds_train, self.active_classes_train, self.depa_train, self.targets_val, self.seq_val, self.active_meds_val, self.active_classes_val, self.depa_val
 
 
 class pse_helper_functions:

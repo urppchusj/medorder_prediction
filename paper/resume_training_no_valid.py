@@ -73,7 +73,7 @@ d.load_data(previous_encs_path=enc_file, get_profiles=False)
 # #### Make the data lists
 
 #%%
-_, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, _, _, _, _, _ = d.make_lists(get_test=False)
+_, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, _, _, _, _, _ = d.make_lists(get_valid=False)
 
 #%%[markdown]
 # ### Word2vec embeddings

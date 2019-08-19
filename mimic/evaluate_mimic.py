@@ -79,7 +79,7 @@ d.split()
 # #### Make the data lists
 
 #%%
-_, targets, seq, active_meds, depa, _, _, _, _ = d.make_lists(get_test=False)
+_, targets, seq, active_meds, depa, _, _, _, _ = d.make_lists(get_valid=False)
 
 #%%[markdown]
 # ### Word2vec embeddings

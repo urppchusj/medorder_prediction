@@ -143,12 +143,12 @@ pse_a = phf.pse_a
 sizes_list = []
 to_concat = []
 split = 0
-for train, test in TimeSeriesSplit(n_splits=5).split(d.enc):
+for train, val in TimeSeriesSplit(n_splits=5).split(d.enc):
 	print('Performing cross-validation split: {}'.format(split))
 	
 	# prepare the data for the fold
-	d.cross_val_split(train, test)
-	profiles_train, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, targets_test, seq_test, active_meds_test, active_classes_test, depa_test = d.make_lists()
+	d.cross_val_split(train, val)
+	profiles_train, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, targets_val, seq_val, active_meds_val, active_classes_val, depa_val = d.make_lists()
 	
 	# train word2vec embeddings
 	w2v = Pipeline([
@@ -183,7 +183,7 @@ for train, test in TimeSeriesSplit(n_splits=5).split(d.enc):
 
 	# sequence generators
 	train_generator = TransformedGenerator(w2v_step, pse, le, targets_train, seq_train, active_meds_train, active_classes_train, depa_train, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE)
-	test_generator = TransformedGenerator(w2v_step, pse, le, targets_test, seq_test, active_meds_test, active_classes_test, depa_test, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE, shuffle=False)
+	val_generator = TransformedGenerator(w2v_step, pse, le, targets_val, seq_val, active_meds_val, active_classes_val, depa_val, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE, shuffle=False)
 	n = neural_network()
 
 	# instantiate the model
@@ -200,23 +200,23 @@ for train, test in TimeSeriesSplit(n_splits=5).split(d.enc):
 	model.fit_generator(train_generator,
 		epochs=1000,
 		callbacks=callbacks,
-		validation_data=test_generator,
+		validation_data=val_generator,
 		verbose=verbose)
 
 	# Get the metrics for the best epoch (EarlyStopCallback restores best epoch)
 	train_results = model.evaluate_generator(train_generator, verbose=verbose)
-	test_results = model.evaluate_generator(test_generator, verbose=verbose)
+	val_results = model.evaluate_generator(val_generator, verbose=verbose)
 
 	# Make a list of validation metrics names
 	val_metrics = ['val_' + metric_name for metric_name in model.metrics_names]
 
 	# Concatenate all results in a list
-	all_results = [*train_results, *test_results]
+	all_results = [*train_results, *val_results]
 	all_metric_names = [*model.metrics_names, *val_metrics]
 
 	# make a dataframe with the fold metrics
 	fold_results_df = pd.DataFrame.from_dict({split:dict(zip(all_metric_names, all_results))}, orient='index')
-	sizes_list.append({'train':len(seq_train), 'test':len(seq_test)})
+	sizes_list.append({'train':len(seq_train), 'val':len(seq_val)})
 	to_concat.append(fold_results_df)
 	split += 1
 

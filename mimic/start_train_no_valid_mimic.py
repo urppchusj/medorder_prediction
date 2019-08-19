@@ -136,7 +136,7 @@ if RESTRICT_DATA:
 # #### Make the data lists
 
 #%%
-profiles_train, targets_train, seq_train, active_meds_train, depa_train, _, _, _, _ = d.make_lists(get_test=False)
+profiles_train, targets_train, seq_train, active_meds_train, depa_train, _, _, _, _ = d.make_lists(get_valid=False)
 
 #%%[markdown]
 # ### Word2vec embeddings
