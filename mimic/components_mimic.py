@@ -300,10 +300,13 @@ class neural_network:
 			callbacks.append(EpochLoggerCallback(save_path, n_done_epochs))
 		return callbacks
 
-	def schedule(self, i, cur_lr):
+	def schedule(self, epoch, cur_lr):
 		# The schedule is hardcoded here from the results
 		# of a training with validation
-		new_lr = cur_lr
+		if epoch < 11:
+			new_lr = 1e-3
+		if epoch >= 11:
+			new_lr = 1e-4
 		return new_lr
 
 	def define_model(self, sequence_size, n_add_seq_layers, dense_pse_size, concat_size, dense_size, dropout, l2_reg, sequence_length, w2v_embedding_dim, pse_shape, n_add_pse_dense, n_dense, output_n_classes):

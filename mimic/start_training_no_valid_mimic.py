@@ -50,7 +50,7 @@ pathlib.Path(SAVE_PATH).mkdir(parents=True, exist_ok=True)
 #%%
 RESTRICT_DATA = False
 RESTRICT_SAMPLE_SIZE = 1000
-N_TRAINING_EPOCHS = 5
+N_TRAINING_EPOCHS = 13
 
 #%%[markdown]
 # ### Word2vec hyperparameters
