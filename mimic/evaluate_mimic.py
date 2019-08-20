@@ -5,7 +5,10 @@
 # ## Imports
 
 #%%
+
 import os
+import sys
+sys.path.append('./mimic/')
 import pathlib
 import pickle
 from datetime import datetime
@@ -40,7 +43,7 @@ from components_mimic import (TransformedGenerator, check_ipynb, data,
 # Will continue saving there.
 
 #%%
-SAVE_DIR = '20190811-0047training'
+SAVE_DIR = '20190819-1805training'
 save_path = os.path.join('mimic', 'model', SAVE_DIR)
 
 #%%[markdown]
@@ -63,23 +66,22 @@ in_ipynb = check_ipynb().is_inipynb()
 # #### Load the data
 
 #%%
-BATCH_SIZE, SEQUENCE_LENGTH, W2V_EMBEDDING_DIM = joblib.load(os.path.join(save_path, 'hp.joblib'))
 
-d = data(subset='valid')
+hp = joblib.load(os.path.join(save_path, 'hp.joblib'))
+if len(hp) == 3:
+	BATCH_SIZE, SEQUENCE_LENGTH, W2V_EMBEDDING_DIM = hp
+elif len(hp) == 4:
+	_, BATCH_SIZE, SEQUENCE_LENGTH, W2V_EMBEDDING_DIM = hp
+
+d = data(subset='test')
 
 d.load_data(get_profiles=False)
-
-#%%[markdown]
-# #### Split encounters into a train and test set
-
-#%%
-d.split()
 
 #%%[markdown]
 # #### Make the data lists
 
 #%%
-_, targets, seq, active_meds, depa, _, _, _, _ = d.make_lists(get_valid=False)
+_, targets, seqs, active_meds, depas, _, _, _, _ = d.make_lists(get_valid=False)
 
 #%%[markdown]
 # ### Word2vec embeddings
@@ -128,20 +130,20 @@ output_n_classes = len(le.classes_)
 # are discarded
 
 #%%
-pre_discard_n_targets = len(set(targets))
+pre_discard_n_targets = len(targets)
 targets = [target for target in targets if target in le.classes_]
-seq = [seq for seq, target in zip(seq, targets) if target in le.classes_]
-active_profiles = [active_profile for active_profile, target in zip(active_meds, targets) if target in le.classes_]
-depa = [depa for depa, target in zip(depa, targets) if target in le.classes_]
-post_discard_n_targets = len(set(targets))
+seqs = [seq for seq, target in zip(seqs, targets) if target in le.classes_]
+active_meds = [active_med for active_med, target in zip(active_meds, targets) if target in le.classes_]
+depas = [depa for depa, target in zip(depas, targets) if target in le.classes_]
+post_discard_n_targets = len(targets)
 
-print('Predicting on {} samples, {:.2f} % of {} samples, {} samples discarded because of unseen labels.'.format(len(targets), 100*post_discard_n_targets/pre_discard_n_targets, pre_discard_n_targets, pre_discard_n_targets-post_discard_n_targets))
+print('Predicting on {} samples, {:.2f} % of original samples, {} samples discarded because of unseen labels.'.format(pre_discard_n_targets, 100*post_discard_n_targets/pre_discard_n_targets, pre_discard_n_targets-post_discard_n_targets))
 
 #%%[markdown]
 # #### Sequence generators
 
 #%%
-eval_generator = TransformedGenerator(w2v_step, pse, le, targets, seq, active_meds, depa, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE)
+eval_generator = TransformedGenerator(w2v_step, pse, le, targets, seqs, active_meds, depas, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE, shuffle=False)
 
 #%%[markdown]
 # #### Instantiate the model
@@ -211,9 +213,9 @@ unique_categorized_departments = list(set(categorized_departments))
 for department in unique_categorized_departments:
 	print('Results for category: {}'.format(department))
 	indices = [i for i, value in enumerate(categorized_departments) if value == department]
-	selected_seq = [seq[i] for i in indices]
+	selected_seq = [seqs[i] for i in indices]
 	selected_active_meds = [active_meds[i] for i in indices]
-	selected_depa = [depa[i] for i in indices]
+	selected_depa = [depas[i] for i in indices]
 	selected_targets = [targets[i] for i in indices]
 	eval_generator = TransformedGenerator(w2v_step, pse, le, selected_targets, selected_seq, selected_active_meds, selected_depa, W2V_EMBEDDING_DIM, SEQUENCE_LENGTH, BATCH_SIZE)
 	results = model.evaluate_generator(eval_generator, verbose=1)
