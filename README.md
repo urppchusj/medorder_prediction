@@ -1,7 +1,7 @@
 # Prediction of the next medication order to assist prescription verification by pharmacists in a health care center.
 
 ---
-The code in this repository has been rewritten and improved at https://github.com/grouchysmurf/PharmAI . This repository is only for reference purposes and will not be maintained.
+The code in this repository has been rewritten and improved at https://github.com/pharmai/PharmAI . This repository is only for reference purposes and will not be maintained.
 ---
 
 # Motivation
